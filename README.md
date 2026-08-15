@@ -246,6 +246,13 @@ Take `publishedAt` from whatever records a **deploy**, not from when the work
 was merged. Those differ by however long the change waited, and dating a release
 by its newest commit is how one product's notes ended up three weeks stale.
 
+## Why it is shaped this way
+
+`docs/prd/release-notes-surface.md` records the decisions and what they cost —
+in particular why the host keeps the pipeline, why public and internal are
+different types rather than a flag, and why scrubbing is a floor rather than an
+answer. Two real defects motivated the package and both are named there.
+
 ## Licence
 
 Apache-2.0. See `LICENSE` and `NOTICE`.
