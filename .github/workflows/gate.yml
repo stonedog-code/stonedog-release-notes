@@ -1,0 +1,45 @@
+name: gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # `npm ci` rather than `npm install`: it installs exactly the lockfile and
+      # fails if package.json and the lockfile have drifted, which is the one
+      # check a local `npm install` can never perform because it silently fixes
+      # the drift instead of reporting it.
+      - run: npm ci
+      - run: npm run type-check
+
+      # No `--fix` anywhere in CI. A lint step that repairs the tree hides from
+      # review the errors review exists to catch, and leaves the repair
+      # uncommitted so the same error returns on the next checkout.
+      - run: npm run lint
+      - run: npm test
+
+      # Everything above runs against source files in the checkout, where
+      # `files`, the `exports` map and the tarball contents are invisible —
+      # and those are exactly what breaks at publish time, after review, when
+      # the version is already burned and cannot be reused.
+      - run: npm run verify:package
+
+      # A green gate that examined nothing is the failure this guards against:
+      # ESLint exits 0 while reporting "File ignored by default" for anything
+      # under a dot-directory, and a testMatch resolving to no files also exits
+      # 0. Both read as "clean".
+      - name: Prove the gate was not vacuous
+        run: |
+          linted=$(npx eslint . -f json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).length))')
+          echo "eslint examined $linted files"
+          test "$linted" -ge 5
