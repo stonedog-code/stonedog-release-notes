@@ -35,7 +35,8 @@
     "version:bump:patch": "npm version patch --no-git-tag-version",
     "version:bump:minor": "npm version minor --no-git-tag-version",
     "audit": "npm audit --audit-level=moderate",
-    "verify:package": "bash scripts/verify-package.sh"
+    "verify:package": "bash scripts/verify-package.sh",
+    "publish:stonedog-release-notes": "bash scripts/publish-package.sh"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
@@ -80,5 +81,8 @@
       "optional": true
     }
   },
-  "//peerDependenciesMeta": "Both optional. @types/node is needed only to TYPE-CHECK the ./node subpath; react only if you import the components. A host using just the pure core (publicReleases, groupReleasesByDay, whatsNew) needs neither."
+  "//peerDependenciesMeta": "Both optional. @types/node is needed only to TYPE-CHECK the ./node subpath; react only if you import the components. A host using just the pure core (publicReleases, groupReleasesByDay, whatsNew) needs neither.",
+  "publishConfig": {
+    "access": "public"
+  }
 }
