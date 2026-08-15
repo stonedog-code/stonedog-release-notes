@@ -214,17 +214,51 @@ say "Publishing $PACKAGE_NAME@$VERSION — npm will ask for your 2FA code"
 npm publish --access public
 
 # ---------------------------------------------------------------------------
-# 7. PROVE IT. The registry is eventually consistent for a few seconds, so this
-#    polls rather than asserting once, and ends with a real install.
+# 7. PROVE IT. The registry is eventually consistent, so this polls rather than
+#    asserting once, and ends with a real install.
+#
+# THE WINDOW IS FIVE MINUTES, AND THAT IS NOT PADDING. Measured on this
+# package's first publish (0.1.0, 2026-08-15): a direct, uncached registry GET
+# answered 404 six times and flipped to 200 at about SIXTY seconds. The
+# previous window here was 20 x 3s — exactly sixty seconds — so whether that run
+# reported success or screamed "the publish did NOT succeed" was a coin flip.
+#
+# Getting that wrong is worse than it sounds. The version is already burned by
+# then and cannot be reused, so a false failure sends the operator looking for a
+# problem that does not exist, on the one operation they cannot retry.
+#
+# Two things make the 404 especially convincing during that window, and both
+# were seen: `npm access get status` already answers `public`, and the account
+# already lists the package as owned — so every signal except the packument
+# says it is there.
+#
+# The wait is announced and the attempts are counted, because a silent minute
+# looks like a hang on the step where an operator is most anxious.
 # ---------------------------------------------------------------------------
-say "Verifying it is actually installable"
+PROPAGATION_ATTEMPTS=60
+PROPAGATION_SLEEP=5
+
+say "Waiting for the registry to serve $VERSION (up to $((PROPAGATION_ATTEMPTS * PROPAGATION_SLEEP))s)"
+echo "  A 404 here for the first minute or so is NORMAL and is not a failed publish."
 PROBE_DIR="$(mktemp -d)"
 trap 'rm -rf "$PROBE_DIR"' EXIT
 
-for attempt in $(seq 1 20); do
-  if npm view "$PACKAGE_NAME@$VERSION" version >/dev/null 2>&1; then break; fi
-  [ "$attempt" -lt 20 ] || fail "$PACKAGE_NAME@$VERSION is still not on the registry after publishing. The publish did NOT succeed, whatever it printed."
-  sleep 3
+for attempt in $(seq 1 "$PROPAGATION_ATTEMPTS"); do
+  if npm view "$PACKAGE_NAME@$VERSION" version >/dev/null 2>&1; then
+    echo "  visible after $((attempt * PROPAGATION_SLEEP))s"
+    break
+  fi
+  [ "$attempt" -lt "$PROPAGATION_ATTEMPTS" ] || fail "$PACKAGE_NAME@$VERSION is still not on the registry $((PROPAGATION_ATTEMPTS * PROPAGATION_SLEEP))s after publishing.
+
+That is far longer than propagation has ever taken, so treat it as a failed
+publish rather than a slow one — but CHECK before republishing:
+
+  npm view $PACKAGE_NAME versions --json
+
+If $VERSION is listed, it published and only this check timed out. Do not bump
+the version. If it is absent, re-run this script."
+  printf '  still 404 (%ss)\r' "$((attempt * PROPAGATION_SLEEP))"
+  sleep "$PROPAGATION_SLEEP"
 done
 
 printf '{"name":"probe","version":"1.0.0"}' > "$PROBE_DIR/package.json"
