@@ -147,6 +147,54 @@ likely to include unprompted. With no channel configured you get `undefined` and
 should render nothing: an invitation to report a problem that goes nowhere is
 worse than no invitation.
 
+## Components, if you want them
+
+```tsx
+import { ReleaseNotes, WhatsNew } from "@stonedogcode/release-notes/react";
+
+<ReleaseNotes releases={shown} support={{ kind: "link", href: "/feedback" }} />
+```
+
+**They depend on no design system, and that is a decision rather than an
+omission.** The four products style themselves differently — hopperguard through
+Panda and its own `Styled*` wrappers, the marketing sites otherwise — and a
+component library importing one of those would be unusable by the other three.
+
+So you get semantic HTML, a stable class on every element (`release-notes__item`,
+`release-notes__section--features`, …), and a `components` map to substitute your
+own primitives, partially or entirely:
+
+```tsx
+<ReleaseNotes releases={shown} components={{ VersionHeading: StyledHeading, List: StyledList.Root }} />
+```
+
+Entries are grouped into sections a reader recognises — **New features**, **Fixes**,
+**Improvements** — not `feat`, `fix`, `perf`. The conventional-commit type is a
+maintainer's vocabulary and a customer never agreed to learn it. Override with
+`sections`, and `groupBySection()` is exported for a host writing its own markup.
+
+A breaking change is marked **inline**, not pulled into its own section: it
+belongs beside its own description, and a "Breaking" heading at the top makes
+every release carrying one read like an incident.
+
+**`ReleaseNotes` uses no hooks**, so it renders on the server — a page showing
+static release text should not need `"use client"`. `WhatsNew` does use hooks,
+because it fires a callback once the reader has been shown something, and carries
+the marker itself.
+
+### Three subpaths, and why
+
+| import | needs |
+|---|---|
+| `@stonedogcode/release-notes` | nothing — pure functions |
+| `@stonedogcode/release-notes/react` | React, and `jsx` in your tsconfig |
+| `@stonedogcode/release-notes/node` | `@types/node`, and it imports `fs` |
+
+Because this package ships TypeScript **source**, anything reachable from an
+entry point is compiled by *your* tsconfig. A `.tsx` in the main entry would
+force a Node script that renders nothing to configure `jsx` and resolve React
+types; an `fs` import would break a browser bundle. Both peers are optional.
+
 ## Releases as files, for hosts with no database
 
 `@stonedogcode/release-notes/node` reads a directory of markdown files — one per
