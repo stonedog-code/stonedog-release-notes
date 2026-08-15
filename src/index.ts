@@ -29,6 +29,12 @@ export {
   type WhatsNewWatermark,
 } from "./whatsNew";
 export { supportAction } from "./support";
+export {
+  parseConventionalSubject,
+  parseEntryLine,
+  type ParsedSubject,
+  type ParseEntryOptions,
+} from "./entry";
 export type {
   EntryAudience,
   PublicRelease,

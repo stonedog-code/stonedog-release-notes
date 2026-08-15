@@ -147,6 +147,45 @@ likely to include unprompted. With no channel configured you get `undefined` and
 should render nothing: an invitation to report a problem that goes nowhere is
 worse than no invitation.
 
+## Releases as files, for hosts with no database
+
+`@stonedogcode/release-notes/node` reads a directory of markdown files — one per
+release, checked in, reviewed like any other change. That is the whole story for
+a static site, and it is also a reasonable choice for a host that has a database
+but prefers hand-written notes to anything derived from commits.
+
+```markdown
+---
+version: 1.2.0
+publishedAt: 2026-08-15T15:11:41Z
+summary: Collections got faster, and the importer understands barcodes.
+---
+
+- feat(collections): add an item from the browser, with or without a barcode
+- fix(notes): tell you when a note fails to save (#875)
+- Tidied up the wording on the sign-in screen.
+```
+
+```ts
+import { readReleasesFromDir } from "@stonedogcode/release-notes/node";
+
+const releases = readReleasesFromDir("content/releases");
+```
+
+**The last bullet has no `type:` prefix and is kept anyway.** A sentence a human
+wrote is the best kind of release note; dropping it for failing a grammar meant
+for commit subjects would be exactly backwards. It gets the type `other`, which
+every visibility policy treats as public. The `(#875)` becomes `prNumber` —
+provenance, so it never reaches the public shape.
+
+A file with no `version`, or an unparseable `publishedAt`, **throws and names the
+file**. A release that silently receives today's date, or an invented version,
+puts a wrong answer where a missing one would have been obvious on first read.
+
+Importing this subpath pulls in `fs`, so it is deliberately not part of the main
+entry point — that one stays safe to bundle for a browser. Type-checking it needs
+`@types/node`, declared as an optional peer.
+
 ## Dates
 
 `groupReleasesByDay()` builds its day key from **local** date parts, because the
