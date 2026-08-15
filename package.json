@@ -16,7 +16,7 @@
     "./node": "./src/node/index.ts",
     "./package.json": "./package.json"
   },
-  "//files": "The __tests__ exclusion is load-bearing, not tidiness. Consumers add `node_modules/@stonedogcode/release-notes/src/**` to their Panda `include` globs, so anything shipped under src/ is statically parsed at THEIR build — and the tests import jest globals and fixture data. They also ship a test suite nobody can run to every consumer.",
+  "//files": "The __tests__ exclusion is load-bearing, not tidiness. Consumers add `node_modules/@stonedogcode/release-notes/src/**` to their Panda `include` globs, so anything shipped under src/ is statically parsed at THEIR build \u2014 and the tests import jest globals and fixture data. They also ship a test suite nobody can run to every consumer.",
   "files": [
     "src",
     "!src/**/__tests__/**",
@@ -55,5 +55,17 @@
     "changelog",
     "conventional-commits",
     "whats-new"
-  ]
+  ],
+  "dependencies": {
+    "yaml": "^2.9.0"
+  },
+  "//peerDependencies": "Only the `./node` subpath needs @types/node, and only for TYPE-CHECKING \u2014 we ship TypeScript source rather than a bundle, so the consumer's tsc compiles our `node:fs` import itself. Optional, because a consumer using only the main entry point needs nothing. Found by verify-package.sh on its first run against the subpath: the throwaway consumer failed with `Cannot find module 'node:fs'`, which is invisible to a test suite running inside this repo where @types/node is a devDependency.",
+  "peerDependencies": {
+    "@types/node": ">=20"
+  },
+  "peerDependenciesMeta": {
+    "@types/node": {
+      "optional": true
+    }
+  }
 }
