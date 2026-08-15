@@ -24,11 +24,19 @@ export {
 } from "./group";
 export {
   whatsNew,
-  type WhatsNew,
   type WhatsNewOptions,
+  type WhatsNewResult,
   type WhatsNewWatermark,
 } from "./whatsNew";
 export { supportAction } from "./support";
+export {
+  DEFAULT_SECTIONS,
+  groupBySection,
+  OTHER_SECTION,
+  type EntrySection,
+  type GroupBySectionOptions,
+  type SectionDef,
+} from "./sections";
 export {
   parseConventionalSubject,
   parseEntryLine,
@@ -44,3 +52,9 @@ export type {
   SupportAction,
   SupportChannel,
 } from "./types";
+
+// The React components are NOT re-exported here. They live at
+// `@stonedogcode/release-notes/react`, because this package ships TypeScript
+// source: a `.tsx` reachable from this entry point would force every consumer
+// — including one that renders nothing — to configure `jsx` and resolve React
+// types. Same reasoning as the `./node` split.

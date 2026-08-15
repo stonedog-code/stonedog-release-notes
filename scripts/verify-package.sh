@@ -121,3 +121,50 @@ TS
 npx tsc --noEmit
 npx tsx src/check.ts 2>/dev/null || node --experimental-strip-types src/check.ts
 npx tsx src/check-node.ts 2>/dev/null || node --experimental-strip-types src/check-node.ts
+
+# The components are the third thing that can break independently: a .tsx file
+# left out of `files`, or a react peer that does not resolve. Render one to a
+# string the way a server component would, with no jsdom involved.
+npm install --silent react@19 react-dom@19 @types/react@19 @types/react-dom@19 >/dev/null
+cat > src/check-react.tsx <<'TSX'
+import { renderToStaticMarkup } from "react-dom/server";
+import { ReleaseNotes } from "@stonedogcode/release-notes/react";
+import { publicReleases } from "@stonedogcode/release-notes";
+import type { Release } from "@stonedogcode/release-notes";
+
+const releases: Release[] = [
+  {
+    version: "1.2.0",
+    publishedAt: new Date("2026-08-15T10:00:00Z"),
+    entries: [
+      { type: "feat", subject: "add the browser importer (NEH-1)", prNumber: 42 },
+      { type: "chore", subject: "bump deps" },
+    ],
+  },
+];
+
+// Rendered to a string with NO hook dispatcher — which is the point: this
+// component takes no hooks, so a host can render it on the server without
+// marking the page "use client".
+const html = renderToStaticMarkup(
+  <ReleaseNotes
+    releases={publicReleases(releases, { trackerPrefixes: ["NEH"] })}
+    support={{ kind: "link", href: "/feedback" }}
+  />,
+);
+
+if (!html.includes("New features")) throw new Error("section heading missing");
+if (!html.includes("add the browser importer")) throw new Error("entry missing");
+if (html.includes("NEH-1")) throw new Error("tracker id reached the markup");
+if (html.includes("42")) throw new Error("PR number reached the markup");
+if (html.includes("bump deps")) throw new Error("an internal entry reached the markup");
+if (!html.includes("/feedback")) throw new Error("support link missing");
+
+console.log("react component check OK");
+TSX
+# A React consumer legitimately sets `jsx`; the point of the subpath split is
+# that a NON-React consumer does not have to. The two checks above ran against
+# the tsconfig without it, which is what proves that.
+node -e "const f='tsconfig.json',j=JSON.parse(require('fs').readFileSync(f));j.compilerOptions.jsx='react-jsx';require('fs').writeFileSync(f,JSON.stringify(j))"
+npx tsc --noEmit
+npx tsx src/check-react.tsx

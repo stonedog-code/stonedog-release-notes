@@ -33,7 +33,14 @@ export interface WhatsNewOptions {
   limit?: number;
 }
 
-export interface WhatsNew {
+/**
+ * The answer: what this reader has not seen, and what to record once they have.
+ *
+ * Named `…Result` because the component that renders it is `WhatsNew`, and one
+ * name cannot be both — the collision only surfaced at `tsc` after both were
+ * exported from the index.
+ */
+export interface WhatsNewResult {
   /** Releases the reader has not seen, newest first, capped by `limit`. */
   releases: PublicRelease[];
   /** True when there is something worth showing. */
@@ -69,7 +76,7 @@ export function whatsNew(
   releases: readonly PublicRelease[],
   watermark: WhatsNewWatermark | undefined,
   options: WhatsNewOptions = {},
-): WhatsNew {
+): WhatsNewResult {
   const limit = options.limit ?? 5;
   const newest = releases[0];
 
