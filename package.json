@@ -36,7 +36,9 @@
     "version:bump:minor": "npm version minor --no-git-tag-version",
     "audit": "npm audit --audit-level=moderate",
     "verify:package": "bash scripts/verify-package.sh",
-    "publish:stonedog-release-notes": "bash scripts/publish-package.sh"
+    "publish:stonedog-release-notes": "bash scripts/publish-package.sh",
+    "//release": "One memorable command per repo. It cannot be called `publish`: that is a reserved npm lifecycle name, so `npm publish` inside scripts/publish-package.sh would fire it and run the whole gate and publish a second time, hitting the already-published guard and reporting a successful release as a failure.",
+    "release": "npm run publish:stonedog-release-notes"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
