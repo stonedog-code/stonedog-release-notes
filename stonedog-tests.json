@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "project": "stonedog-release-notes",
+  "tiers": {
+    "unit": {
+      "include": ["src/__tests__/**/*.test.ts", "src/__tests__/**/*.test.tsx"]
+    }
+  }
+}
